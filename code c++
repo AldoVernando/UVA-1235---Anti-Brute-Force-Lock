@@ -1,0 +1,165 @@
+#include<stdio.h>
+#include<vector>
+#include<string.h>
+#include<algorithm>
+
+using namespace std;
+
+bool checkEdges[500][500];
+int countLock = 0;
+int parent[500];
+
+struct lock{
+	int a = 0;
+	int b = 0;
+	int c = 0;
+	int d = 0;
+	int index = 0;
+}init;
+
+struct edge{
+	lock src;
+	lock dst;
+	int weight;
+};
+
+vector<lock> locks;
+vector<edge> edges;
+
+bool compare(edge a, edge b)
+{ 
+    return a.weight < b.weight; 
+}
+
+int getParent(int curr){
+	if(parent[curr] != curr)
+		return parent[curr] = getParent(parent[curr]);
+	return parent[curr];
+}
+
+void findEdges(){
+	
+	for(int i=0;i<locks.size();i++){
+		for(int j=0;j<locks.size();j++){
+			if(checkEdges[i][j] == false && i!=j){
+				
+				edge e;
+				e.src = locks[i];
+				e.dst = locks[j];
+
+				int sumA = (locks[i].a - locks[j].a);
+				int sumB = (locks[i].b - locks[j].b);
+				int sumC = (locks[i].c - locks[j].c);
+				int sumD = (locks[i].d - locks[j].d);
+				
+				if(sumA < 0)
+					sumA *= -1;
+				if(sumB < 0)
+					sumB *= -1;
+				if(sumC < 0)
+					sumC *= -1;
+				if(sumD < 0)
+					sumD *= -1;	
+					
+				int checkA = ((locks[i].a+10) - locks[j].a);
+				int checkB = ((locks[i].b+10) - locks[j].b);
+				int checkC = ((locks[i].c+10) - locks[j].c);
+				int checkD = ((locks[i].d+10) - locks[j].d);
+					
+				if(sumA > checkA)
+					sumA = checkA;
+				if(sumB > checkB)
+					sumB = checkB;
+				if(sumC > checkC)
+					sumC = checkC;
+				if(sumD > checkD)
+					sumD = checkD;	
+				
+				checkA = ((locks[j].a+10) - locks[i].a);
+				checkB = ((locks[j].b+10) - locks[i].b);
+				checkC = ((locks[j].c+10) - locks[i].c);
+				checkD = ((locks[j].d+10) - locks[i].d);
+					
+				if(sumA > checkA)
+					sumA = checkA;
+				if(sumB > checkB)
+					sumB = checkB;
+				if(sumC > checkC)
+					sumC = checkC;
+				if(sumD > checkD)
+					sumD = checkD;				
+				
+				e.weight = sumA + sumB + sumC + sumD;
+				
+				edges.push_back(e);
+				
+				checkEdges[i][j] = true;
+				checkEdges[j][i] = true;
+			}
+		}
+	}	
+}
+
+int main(){
+	
+	int input;
+	
+	scanf("%d",&input);
+	for(int i=0;i<input;i++){
+		
+		memset(checkEdges,0,sizeof(checkEdges));
+		locks.clear();
+		edges.clear();
+		
+		locks.push_back(init);
+		
+		scanf("%d",&countLock);
+		
+		for(int j=0;j<countLock;j++){
+			int a,b,c,d;
+			scanf("%1d%1d%1d%1d",&a,&b,&c,&d);
+			
+			lock l;
+			l.a = a;
+			l.b = b;
+			l.c = c;
+			l.d = d;
+			l.index = locks.size();
+			
+			locks.push_back(l);
+		}
+		
+		findEdges();
+		
+		sort(edges.begin(), edges.end(),compare);
+
+		for(int i=0;i<locks.size();i++){
+			parent[i] = i;
+		}
+		
+		int mst = 0;
+		bool state = true;
+	 	
+		for(int i=0;i<edges.size();i++){
+			
+			if(getParent(edges[i].src.index) != getParent(edges[i].dst.index)){
+				
+				if((edges[i].src.index == 0 || edges[i].dst.index == 0) && state){
+					state = false;
+					parent[getParent(edges[i].src.index)] = getParent(edges[i].dst.index);
+					mst += edges[i].weight;
+				}
+				else{
+					if(edges[i].src.index != 0 && edges[i].dst.index != 0){
+						parent[getParent(edges[i].src.index)] = getParent(edges[i].dst.index);
+						mst += edges[i].weight;
+					}
+				}
+			}	
+		}
+		
+		printf("%d\n",mst);
+		
+	}
+	return 0;
+}
